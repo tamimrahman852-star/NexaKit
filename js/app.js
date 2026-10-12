@@ -15,7 +15,7 @@ window.omni = () => ({
     addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();this.$refs.search.focus()}});
     this.$watch('q',()=>this.filter()); this.$watch('cat',()=>this.filter());
     const h=location.hash.slice(1); if(h){const t=TOOLS.find(x=>x.id===h); if(t) this.open(t);}
-    if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+    if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
     addEventListener('online',()=>this.flush());
   },
   measure(){ const g=this.$refs.grid; this.cols=Math.max(1,Math.floor((g.clientWidth+GAP)/(260+GAP))); this.vh=g.clientHeight; },
