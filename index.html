@@ -1,0 +1,70 @@
+<!doctype html><html lang="en" class="dark"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NexaKit — 500+ Free Online Tools to Work, Create & Earn</title>
+<meta name="description" content="Free offline-ready tools: JSON formatter, JWT decoder, EMI calculator, currency converter, AI writer, CSS generators and more. Earn rewards daily.">
+<link rel="canonical" href="https://nexakit.app/"><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#0f172a">
+<meta property="og:type" content="website"><meta property="og:title" content="NexaKit"><meta property="og:description" content="500+ free tools that work offline."><meta property="og:image" content="https://nexakit.app/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"NexaKit","applicationCategory":"DeveloperApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script src="https://cdn.tailwindcss.com"></script><!-- replace with built CSS for production -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script type="module" src="/js/app.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<style>.glass{background:rgba(30,41,59,.55);backdrop-filter:blur(14px);border:1px solid rgba(139,92,246,.2)}.card{transition:transform .2s,box-shadow .2s}.card:hover{transform:translateY(-3px);box-shadow:0 10px 30px -8px rgba(124,58,237,.5)}</style>
+</head><body class="bg-slate-950 text-slate-100 min-h-screen bg-[radial-gradient(ellipse_at_top,#312e81_0%,#020617_60%)]" x-data="omni()" x-init="init()">
+<header class="glass sticky top-0 z-20 p-3 flex flex-wrap gap-2 items-center">
+  <h1 class="font-bold text-lg bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">NexaKit</h1>
+  <input x-model.debounce.120ms="q" placeholder="Search tools…" class="flex-1 min-w-40 bg-slate-900/70 rounded-xl px-4 py-2 outline-none focus:ring-2 ring-violet-500" aria-label="Search tools" x-ref="search"> <!-- Ctrl/Cmd+K focuses -->
+  <span class="text-sm text-violet-300" x-show="user" x-text="points+' pts'"></span>
+  <button x-show="user" @click="checkin()" class="px-3 py-2 rounded-xl glass" title="Daily check-in">🔥 <span x-text="streak"></span></button>
+  <button @click="user?page='earn':login()" class="px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-500" x-text="user?'Earn':'Sign in'"></button>
+</header>
+<main class="max-w-6xl mx-auto p-3">
+  <nav class="flex gap-2 overflow-x-auto pb-2" aria-label="Categories">
+    <button @click="cat='all';page='tools'" :class="cat==='all'&&'bg-indigo-600'" class="px-3 py-1 rounded-full glass whitespace-nowrap">All</button>
+    <button @click="cat='fav';page='tools'" :class="cat==='fav'&&'bg-indigo-600'" class="px-3 py-1 rounded-full glass whitespace-nowrap">⭐ Favorites</button>
+    <template x-for="(n,k) in CATS"><button @click="cat=k;page='tools'" :class="cat===k&&'bg-indigo-600'" class="px-3 py-1 rounded-full glass whitespace-nowrap" x-text="n"></button></template>
+  </nav>
+  <p class="text-xs text-slate-400 my-2"><span x-text="list.length"></span> shown • <span x-text="total"></span>/<span x-text="target"></span> tools registered</p>
+  <div x-show="!user||!user.pro" class="glass rounded-xl p-3 text-center text-xs text-slate-400 mb-3">Ad slot (hidden for Pro) <!-- AdSense/ad unit goes here --></div>
+
+  <section x-show="page==='tools'" x-ref="grid" @scroll.passive="top=$el.scrollTop" class="relative overflow-auto" style="height:70vh">
+    <div :style="`height:${height}px;position:relative`">
+      <template x-for="t in visible" :key="t.id">
+        <article @click="open(t)" class="card glass rounded-2xl p-4 absolute cursor-pointer" tabindex="0" @keydown.enter="open(t)"
+          :style="`height:104px;top:${t.y}px;left:calc(${t.x} * 100% / ${cols});width:calc(100% / ${cols} - 12px)`">
+          <button @click.stop="toggleFav(t.id)" class="absolute top-2 right-3 text-lg" :aria-label="'Favorite '+t.name" x-text="favs.includes(t.id)?'★':'☆'"></button>
+          <div class="text-2xl" x-text="t.icon"></div><h2 class="font-semibold truncate" x-text="t.name"></h2><p class="text-xs text-slate-400" x-text="CATS[t.cat]"></p>
+        </article></template>
+    </div>
+  </section>
+
+  <section x-show="page==='earn'" class="glass rounded-2xl p-4 space-y-4">
+    <h2 class="text-xl font-bold">Earn Center</h2>
+    <p class="text-sm">Referral link: <code class="text-violet-300" x-text="user?.refCode?location.origin+'/?ref='+user.refCode:''"></code>
+      <button class="underline ml-2" @click="copy(location.origin+'/?ref='+user.refCode)">copy</button></p>
+    <form @submit.prevent="withdraw(Object.fromEntries(new FormData($event.target)))" class="grid gap-2 max-w-sm">
+      <select name="channel" class="bg-slate-900 rounded p-2"><template x-for="c in CFG.PAYOUT_CHANNELS"><option x-text="c"></option></template></select>
+      <input name="account" required placeholder="Wallet number / Binance ID" class="bg-slate-900 rounded p-2">
+      <input name="points" type="number" :min="CFG.MIN_WITHDRAW" required placeholder="Points" class="bg-slate-900 rounded p-2">
+      <button class="bg-violet-600 rounded p-2">Request payout</button></form>
+    <p class="text-xs text-slate-400">Payouts are reviewed manually. Support: <span x-text="CFG.CREATOR.number"></span></p>
+  </section>
+
+  <aside class="glass rounded-2xl p-4 mt-4 flex items-center justify-between flex-wrap gap-2">
+    <div><b>Support Creator • Tamim Rahman</b><div class="text-sm text-slate-400">bKash / Nagad / Rocket: <span x-text="CFG.CREATOR.number"></span></div></div>
+    <button @click="copy(CFG.CREATOR.number,'Number copied')" class="px-3 py-2 rounded-xl bg-indigo-600">Copy number</button>
+  </aside>
+</main>
+
+<div x-show="active" x-cloak class="fixed inset-0 z-30 bg-black/70 flex items-end md:items-center justify-center p-2" @keydown.escape.window="active=null">
+  <div class="glass rounded-2xl w-full max-w-2xl p-4 space-y-3 bg-slate-900">
+    <div class="flex justify-between"><h2 class="font-bold" x-text="active?.name"></h2><button @click="active=null" aria-label="Close">✕</button></div>
+    <textarea x-model="input" rows="5" :placeholder="active?.hint" class="w-full bg-slate-950 rounded-xl p-3 font-mono text-sm"></textarea>
+    <button @click="run()" :disabled="busy" class="px-4 py-2 rounded-xl bg-violet-600">Run</button>
+    <pre class="bg-slate-950 rounded-xl p-3 text-sm overflow-auto max-h-48 whitespace-pre-wrap" x-text="output"></pre>
+    <div class="flex gap-2 text-sm" x-show="output"><button @click="copy(output)">Copy</button><button @click="share()">Share</button><button @click="share('wa')">WhatsApp</button><button @click="share('x')">X</button></div>
+  </div>
+</div>
+<div x-show="toast" x-text="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-violet-600 px-4 py-2 rounded-full"></div>
+</body></html>
