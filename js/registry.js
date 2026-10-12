@@ -31,7 +31,7 @@ def('fin','fx','Currency Converter','💱',async s=>{const[a,f,t]=s.trim().split
 // Family generator: one table -> N tools
 
 // ---- C: AI suite — always via rate-limited Edge Function 'ai-proxy' (never ship model keys to the client)
-const AI=(id,name,icon,sys)=>def('ai',id,name,icon,async(s,{sb})=>{const{data,error}=await sb.functions.invoke('ai-proxy',{body:{task:id,system:sys,input:s}});if(error)throw error;return data.text},'Paste text','ai '+sys);
+const AI=(id,name,icon,sys)=>def('ai',id,name,icon,async(s,{sb})=>{const{data,error}=await sb.functions.invoke('ai-proxy',{body:{task:id,system:sys,input:s}});if(error){let m=error.message;try{m=(await error.context.json()).message||m}catch{}throw new Error(m)}return data.text},'Paste text','ai '+sys);
 AI('summarize','Text Summarizer','✂','Summarize concisely.');
 AI('email','Professional Email Writer','✉','Write a professional email.');
 AI('grammar','Grammar Fixer','✓','Fix grammar, keep meaning.');
@@ -47,7 +47,7 @@ def('design','palette','Random Color Palette','🎨',()=>Array.from({length:5},r
 def('design','radius','Border-Radius Builder','◜',s=>`border-radius: ${nums(s).map(n=>n+'px').join(' ')};`,'1-4 px values');
 
 // ---- E: Micro-task / utility
-def('micro','refcode','Referral Link Generator','🔗',(_,{user})=>user?`${location.origin}/?ref=${user.refCode}`:'Sign in to get your referral link');
+def('micro','refcode','Referral Link Generator','🔗',(_,{user})=>user?`${location.origin}${location.pathname}?ref=${user.refCode}`:'Sign in to get your referral link');
 def('micro','pomodoro-plan','Pomodoro Planner','⏱',s=>Array.from({length:+s||4},(_,i)=>`#${i+1}: 25 focus + ${(i+1)%4?5:20} break`).join('\n'),'number of sessions');
 
 // Heavy tools (QR, PDF, image compression) load on demand via dynamic import
