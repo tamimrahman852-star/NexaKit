@@ -1,0 +1,15 @@
+import { def } from '../core.js';
+const M = (id,name,icon,run,hint='') => def('micro',id,name,icon,run,hint,'game fun random');
+const pick = a => a[crypto.getRandomValues(new Uint32Array(1))[0]%a.length];
+const lines = s => s.split('\n').map(x=>x.trim()).filter(Boolean);
+for (const n of [4,6,8,10,12,20,100]) M('dice-d'+n,`Roll d${n}`,'🎲',s=>Array.from({length:+s||1},()=>1+crypto.getRandomValues(new Uint32Array(1))[0]%n).join(', '),'How many dice (default 1)');
+M('coin','Coin Flip','🪙',()=>pick(['Heads','Tails']));
+M('random-number','Random Number','🔢',s=>{const[a=1,b=100]=s.split(/[,\s]+/).map(Number);return String(a+crypto.getRandomValues(new Uint32Array(1))[0]%(b-a+1))},'min, max');
+M('pick-one','Random Picker / Decision Wheel','🎡',s=>'🎯 '+pick(lines(s)),'One option per line');
+M('shuffle','List Shuffler','🔀',s=>{const a=lines(s);for(let i=a.length-1;i>0;i--){const j=crypto.getRandomValues(new Uint32Array(1))[0]%(i+1);[a[i],a[j]]=[a[j],a[i]]}return a.join('\n')},'One item per line');
+M('team-split','Random Team Splitter','👥',s=>{const[n,...p]=lines(s);const a=p.sort(()=>Math.random()-.5),t=Array.from({length:+n||2},()=>[]);a.forEach((x,i)=>t[i%t.length].push(x));return t.map((x,i)=>`Team ${i+1}: ${x.join(', ')}`).join('\n')},'Line 1 = number of teams, then names');
+M('countdown-days','Days Until Date','⏳',s=>`${Math.ceil((new Date(s.trim())-Date.now())/864e5)} days left`,'2026-12-31');
+M('magic-8','Magic 8-Ball','🎱',()=>pick(['Yes','No','Definitely','Ask again later','Very doubtful','Without a doubt','Better not tell you now','Signs point to yes']),'');
+M('rps','Rock Paper Scissors','✊',s=>{const u=s.trim().toLowerCase(),c=pick(['rock','paper','scissors']),w={rock:'scissors',paper:'rock',scissors:'paper'};return `You: ${u}  CPU: ${c}\n`+(u===c?'Draw':w[u]===c?'You win! 🎉':'CPU wins')},'rock / paper / scissors');
+M('quick-math','Quick Math Challenge','🧠',()=>{const a=2+Math.random()*30|0,b=2+Math.random()*30|0,o=pick(['+','-','×']);return `${a} ${o} ${b} = ?\n(answer: ${o==='+'?a+b:o==='-'?a-b:a*b})`});
+M('lucky-number','Daily Lucky Number','🍀',()=>{const d=new Date().toDateString();let h=0;for(const c of d)h=(h*31+c.charCodeAt(0))%100;return `Your lucky number today: ${h+1}`});

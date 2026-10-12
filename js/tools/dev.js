@@ -1,0 +1,27 @@
+import { def } from '../core.js';
+const D = (id,name,icon,run,hint='Paste input',tags='') => def('dev',id,name,icon,run,hint,'developer '+tags);
+D('ts-to-date','Unix Timestamp → Date','🕒',s=>{const n=+s.trim();const d=new Date(n<1e12?n*1e3:n);return `UTC: ${d.toISOString()}\nLocal: ${d.toString()}`},'1760000000');
+D('date-to-ts','Date → Unix Timestamp','🕒',s=>String(Math.floor(new Date(s.trim()).getTime()/1e3)),'2026-10-12T10:00:00Z');
+D('now-ts','Current Unix Timestamp','🕒',()=>String(Math.floor(Date.now()/1e3)));
+for(const [a,b] of [[2,8],[2,10],[2,16],[8,2],[8,10],[8,16],[10,2],[10,8],[10,16],[16,2],[16,8],[16,10]])
+  D(`base-${a}-${b}`,`Base ${a} → Base ${b}`,'🔢',s=>parseInt(s.trim(),a).toString(b).toUpperCase(),'Number','binary hex octal decimal');
+const csv=l=>l.match(/("([^"]|"")*"|[^,])+|(?<=,)(?=,)|^(?=,)|(?<=,)$/g)||[];
+D('csv-to-json','CSV → JSON','📄',s=>{const[h,...r]=s.trim().split('\n').map(csv);return JSON.stringify(r.map(x=>Object.fromEntries(h.map((k,i)=>[k.trim(),(x[i]||'').replace(/^"|"$/g,'')]))),null,2)});
+D('json-to-csv','JSON → CSV','📄',s=>{const a=JSON.parse(s),h=[...new Set(a.flatMap(Object.keys))];return [h.join(','),...a.map(o=>h.map(k=>JSON.stringify(o[k]??'')).join(','))].join('\n')});
+D('qs-to-json','Query String → JSON','🔗',s=>JSON.stringify(Object.fromEntries(new URLSearchParams(s.replace(/^.*\?/,''))),null,2));
+D('json-to-qs','JSON → Query String','🔗',s=>new URLSearchParams(JSON.parse(s)).toString());
+D('url-parse','URL Parser','🌐',s=>{const u=new URL(s.trim());return JSON.stringify({protocol:u.protocol,host:u.host,path:u.pathname,query:Object.fromEntries(u.searchParams),hash:u.hash},null,2)});
+D('json-sort','JSON Sort Keys','{}',s=>{const f=o=>Array.isArray(o)?o.map(f):o&&typeof o==='object'?Object.fromEntries(Object.keys(o).sort().map(k=>[k,f(o[k])])):o;return JSON.stringify(f(JSON.parse(s)),null,2)});
+D('json-validate','JSON Validator','✅',s=>{try{JSON.parse(s);return '✔ Valid JSON'}catch(e){return '✘ '+e.message}});
+D('json-escape','JSON String Escape','{}',s=>JSON.stringify(s).slice(1,-1));
+D('json-unescape','JSON String Unescape','{}',s=>JSON.parse('"'+s+'"'));
+D('html-dec','HTML Entity Decode','&',s=>new DOMParser().parseFromString(s,'text/html').documentElement.textContent);
+D('sql-format','SQL Formatter','🗄',s=>s.replace(/\s+/g,' ').replace(/\b(FROM|WHERE|GROUP BY|ORDER BY|HAVING|LIMIT|LEFT JOIN|RIGHT JOIN|INNER JOIN|JOIN|UNION|VALUES|SET)\b/gi,'\n$1').replace(/\b(AND|OR)\b/gi,'\n  $1').replace(/,\s*/g,',\n  '),'Paste SQL');
+D('css-minify','CSS Minifier','🎨',s=>s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/\s+/g,' ').replace(/\s*([{}:;,])\s*/g,'$1').replace(/;}/g,'}').trim());
+D('html-minify','HTML Minifier','🧱',s=>s.replace(/<!--[\s\S]*?-->/g,'').replace(/>\s+</g,'><').replace(/\s+/g,' ').trim());
+D('js-strip-comments','JS Comment Remover','✂',s=>s.replace(/\/\*[\s\S]*?\*\/|(^|[^:\\])\/\/.*$/gm,'$1'));
+D('nanoid','Random ID / Token Generator','🎲',()=>Array.from({length:5},()=>[...crypto.getRandomValues(new Uint8Array(21))].map(b=>'0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-'[b&63]).join('')).join('\n'));
+D('random-hex','Random Hex Key (256-bit)','🎲',()=>[...crypto.getRandomValues(new Uint8Array(32))].map(b=>b.toString(16).padStart(2,'0')).join(''));
+const HS={200:'OK',201:'Created',204:'No Content',301:'Moved Permanently',302:'Found',304:'Not Modified',400:'Bad Request',401:'Unauthorized',403:'Forbidden',404:'Not Found',405:'Method Not Allowed',409:'Conflict',410:'Gone',422:'Unprocessable Entity',429:'Too Many Requests',500:'Internal Server Error',502:'Bad Gateway',503:'Service Unavailable',504:'Gateway Timeout'};
+D('http-status','HTTP Status Code Lookup','📡',s=>HS[+s.trim()]?`${s.trim()} ${HS[+s.trim()]}`:Object.entries(HS).map(([k,v])=>`${k} ${v}`).join('\n'),'Code, or empty for all');
+D('jwt-expiry','JWT Expiry Checker','🔑',s=>{const p=JSON.parse(atob(s.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return p.exp?`Expires: ${new Date(p.exp*1e3).toISOString()}\n${p.exp*1e3<Date.now()?'EXPIRED':'Still valid'}`:'No exp claim'});
